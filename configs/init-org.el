@@ -221,21 +221,20 @@
 ;; ;;; To-do settings
 
 (setq org-todo-keywords
-      (quote ((sequence "TODO(t)" "NEXT(n)" "OUTCOME(t)" "|" "DONE(d!/!)")
+      (quote ((sequence "TODO(t)" "NEXT(n)" "OUTCOME(o)" "|" "DONE(d!/!)")
               (sequence "PROJECT(p)" "|" "DONE(d!/!)" "CANCELLED(c@/!)")
-              (sequence "WAITING(w@/!)" "HOLD(h)" "|" "CANCELLED(c@/!)"))))
+              (sequence "WAITING(w@/!)" "HOLD(h)" "SOMEDAY(s)" "|" "CANCELLED(c@/!)"))))
 
 (setq org-todo-keyword-faces
       (quote (("TODO" :foreground "red" :weight bold)
               ("NEXT" :foreground "green" :weight bold)
               ("DONE" :foreground "blue" :weight bold)
-              ("KRA" :foreground "black")
-              ("FOLLOW-UP" :foreground "orange" :weight bold)
               ("OUTCOME" :foreground "cyan" :weight bold)
               ("WAITING" :foreground "orange" :weight bold)
               ("HOLD" :foreground "magenta" :weight bold)
               ("CANCELLED" :foreground "purple" :weight bold)
               ("MEETING" :foreground "forest green" :weight bold)
+              ("SOMEDAY" :foreground "pink" :weight bold)
               ("PHONE" :foreground "forest green" :weight bold))))
 
 (setq org-todo-state-tags-triggers
@@ -245,6 +244,7 @@
               (done ("WAITING") ("HOLD"))
               ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
               ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
+              ("OUTCOME" ("WAITING") ("CANCELLED") ("HOLD"))
               ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
 
 
@@ -302,17 +302,6 @@
                             (org-agenda-todo-ignore-with-date bh/hide-scheduled-and-waiting-next-tasks)
                             (org-agenda-sorting-strategy
                              '(todo-state-down effort-up category-keep))))
-                ;; (tags-todo "-REFILE-CANCELLED-WAITING-HOLD/!"
-                ;;            ((org-agenda-overriding-header (concat "Project Subtasks"
-                ;;                                                   (if bh/hide-scheduled-and-waiting-next-tasks
-                ;;                                                       ""
-                ;;                                                     " (including WAITING and SCHEDULED tasks)")))
-                ;;             (org-agenda-skip-function 'bh/skip-non-project-tasks)
-                ;;             (org-agenda-todo-ignore-scheduled bh/hide-scheduled-and-waiting-next-tasks)
-                ;;             (org-agenda-todo-ignore-deadlines bh/hide-scheduled-and-waiting-next-tasks)
-                ;;             (org-agenda-todo-ignore-with-date bh/hide-scheduled-and-waiting-next-tasks)
-                ;;             (org-agenda-sorting-strategy
-                ;;              '(category-keep))))
                 (tags-todo "-REFILE-CANCELLED-WAITING-HOLD/!"
                            ((org-agenda-overriding-header (concat "Standalone Tasks"
                                                                   (if bh/hide-scheduled-and-waiting-next-tasks
@@ -324,8 +313,8 @@
                             (org-agenda-todo-ignore-with-date bh/hide-scheduled-and-waiting-next-tasks)
                             (org-agenda-sorting-strategy
                              '(category-keep))))
-                (tags-todo "-CANCELLED+WAITING|HOLD/!"
-                           ((org-agenda-overriding-header (concat "Waiting and Postponed Tasks"
+                (tags-todo "-CANCELLED+WAITING|SOMEDAY|HOLD/!"
+                           ((org-agenda-overriding-header (concat "Waiting, Someday, and Postponed Tasks"
                                                                   (if bh/hide-scheduled-and-waiting-next-tasks
                                                                       ""
                                                                     " (including WAITING and SCHEDULED tasks)")))
@@ -557,7 +546,12 @@ Callers of this function already widen the buffer view."
        ((org-is-habit-p)
         next-headline)
        ((and bh/hide-scheduled-and-waiting-next-tasks
-             (member "WAITING" (org-get-tags-at)))
+             (member "WAITING" (org-get-tags-at))
+             )
+        next-headline)
+       ((member "HOLD" (org-get-tags-at))
+        next-headline)
+       ((member "SOMEDAY" (org-get-tags-at))
         next-headline)
        ((bh/is-project-p)
         next-headline)
@@ -820,33 +814,33 @@ as the default task."
 ;; 
 ;; ;;; Archiving
 
-;; (setq org-archive-mark-done nil)
-;; (setq org-archive-location "%s_archive::* Archive")
+(setq org-archive-mark-done nil)
+(setq org-archive-location "%s_archive::* Archive")
 
-;; (defun bh/skip-non-archivable-tasks ()
-;;   "Skip trees that are not available for archiving"
-;;   (save-restriction
-;;     (widen)
-;;     ;; Consider only tasks with done todo headings as archivable candidates
-;;     (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
-;;           (subtree-end (save-excursion (org-end-of-subtree t))))
-;;       (if (member (org-get-todo-state) org-todo-keywords-1)
-;;           (if (member (org-get-todo-state) org-done-keywords)
-;;               (let* ((daynr (string-to-int (format-time-string "%d" (current-time))))
-;;                      (a-month-ago (* 60 60 24 (+ daynr 1)))
-;;                      (last-month (format-time-string "%Y-%m-" (time-subtract (current-time) (seconds-to-time a-month-ago))))
-;;                      (this-month (format-time-string "%Y-%m-" (current-time)))
-;;                      (subtree-is-current (save-excursion
-;;                                            (forward-line 1)
-;;                                            (and (< (point) subtree-end)
-;;                                                 (re-search-forward (concat last-month "\\|" this-month) subtree-end t)))))
-;;                 (if subtree-is-current
-;;                     subtree-end ; Has a date in this month or last month, skip it
-;;                   nil))  ; available to archive
-;;             (or subtree-end (point-max)))
-;;         next-headline))))
+(defun bh/skip-non-archivable-tasks ()
+  "Skip trees that are not available for archiving"
+  (save-restriction
+    (widen)
+    ;; Consider only tasks with done todo headings as archivable candidates
+    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
+          (subtree-end (save-excursion (org-end-of-subtree t))))
+      (if (member (org-get-todo-state) org-todo-keywords-1)
+          (if (member (org-get-todo-state) org-done-keywords)
+              (let* ((daynr (string-to-int (format-time-string "%d" (current-time))))
+                     (a-month-ago (* 60 60 24 (+ daynr 1)))
+                     (last-month (format-time-string "%Y-%m-" (time-subtract (current-time) (seconds-to-time a-month-ago))))
+                     (this-month (format-time-string "%Y-%m-" (current-time)))
+                     (subtree-is-current (save-excursion
+                                           (forward-line 1)
+                                           (and (< (point) subtree-end)
+                                                (re-search-forward (concat last-month "\\|" this-month) subtree-end t)))))
+                (if subtree-is-current
+                    subtree-end ; Has a date in this month or last month, skip it
+                  nil))  ; available to archive
+            (or subtree-end (point-max)))
+        next-headline))))
 
-;; 
+
 
 ;; ;; ;; Org pomodoro
 ;; (require-package 'org-pomodoro)
