@@ -181,7 +181,7 @@
 ;; (setq org-refile-use-cache nil)
 
 ;;                                         ; Targets include this file and any file contributing to the agenda - up to 9 levels deep
-;; (setq org-refile-targets '((nil :maxlevel . 9) (org-agenda-files :maxlevel . 9)))
+(setq org-refile-targets '((nil :maxlevel . 9) (org-agenda-files :maxlevel . 9)))
 
 ;; (after-load 'org-agenda
 ;;   (add-to-list 'org-agenda-after-show-hook 'org-show-entry))
@@ -239,22 +239,31 @@
 
 (setq org-todo-state-tags-triggers
       (quote (("CANCELLED" ("CANCELLED" . t))
-              ("WAITING" ("WAITING" . t))
-              ("HOLD" ("WAITING") ("HOLD" . t))
+              ("WAITING" ("HOLD") ("SOMEDAY") ("WAITING" . t))
+              ("HOLD" ("WAITING") ("SOMEDAY") ("HOLD" . t))
+              ("SOMEDAY" ("SOMEDAY" . t))
               (done ("WAITING") ("HOLD"))
-              ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
-              ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
-              ("OUTCOME" ("WAITING") ("CANCELLED") ("HOLD"))
-              ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
+              ("TODO" ("WAITING") ("CANCELLED") ("HOLD") ("SOMEDAY"))
+              ("NEXT" ("WAITING") ("CANCELLED") ("HOLD") ("SOMEDAY"))
+              ("OUTCOME" ("WAITING") ("CANCELLED") ("HOLD") ("SOMEDAY"))
+              ("DONE" ("WAITING") ("CANCELLED") ("HOLD") ("SOMEDAY")))))
 
 
-;;; Load agenda files - see http://osdir.com/ml/emacs-orgmode-gnu/2014-04/msg00470.html
-(load-library "find-lisp")
+;; ;;; Load agenda files - see http://osdir.com/ml/emacs-orgmode-gnu/2014-04/msg00470.html
+;; (load-library "find-lisp")
 
-;;; Search for all files recursively in my documents folder
-(add-hook 'org-agenda-mode-hook (lambda ()
-                                  (setq org-agenda-files (find-lisp-find-files "~/Documents" "\.org$"))
-                                  ))
+;; ;;; Search for all files recursively in my documents folder
+;; (add-hook 'org-agenda-mode-hook (lambda ()
+;;                                   (setq org-agenda-files (find-lisp-find-files "~/Documents" "\.org$"))
+;;                                   ))
+
+;; Agenda files
+(setq org-agenda-files (list "~/Documents/Personal Projects/personal.org"
+                             "~/Documents/Career Projects/UGA/uga-eits.org"
+                             "~/Documents/Meta Work/refile.org"
+                             "~/Documents/Career Projects/Muses/muses.org"
+                        ))
+
 ;; Agenda views
 
 ;; ;; Include diary in agenda
@@ -282,6 +291,10 @@
                 (tags-todo "-CANCELLED/!"
                            ((org-agenda-overriding-header "Stuck Projects")
                             (org-agenda-skip-function 'bh/skip-non-stuck-projects)
+                            (org-agenda-sorting-strategy
+                             '(category-keep))))
+                (tags-todo "+PRIORITY=\"A\""
+                           ((org-agenda-overriding-header "Backlog")
                             (org-agenda-sorting-strategy
                              '(category-keep))))
                 (tags-todo "-HOLD-CANCELLED/!"
@@ -331,68 +344,68 @@
 
 ;; ;; define "R" as the prefix key for reviewing what happened in various
 ;; ;; time periods
-;; (add-to-list 'org-agenda-custom-commands
-;;              '("R" . "Review" )
-;;              )
+(add-to-list 'org-agenda-custom-commands
+             '("R" . "Review" )
+             )
 
-;; ;; Common settings for all reviews
-;; (setq efs/org-agenda-review-settings
-;;       '((org-agenda-files '("~/org/notes.org"
-;;                             "~/org/projects.org"
-;;                             ))
-;;         (org-agenda-show-all-dates t)
-;;         (org-agenda-start-with-log-mode t)
-;;         (org-agenda-start-with-clockreport-mode t)
-;;         (org-agenda-archives-mode t)
-;;         ;; I don't care if an entry was archived
-;;         (org-agenda-hide-tags-regexp
-;;          (concat org-agenda-hide-tags-regexp
-;;                  "\\|ARCHIVE"))
-;;         ))
-;; ;; Show the agenda with the log turn on, the clock table show and
-;; ;; archived entries shown.  These commands are all the same exept for
-;; ;; the time period.
-;; (add-to-list 'org-agenda-custom-commands
-;;              `("Rw" "Week in review"
-;;                agenda ""
-;;                ;; agenda settings
-;;                ,(append
-;;                  efs/org-agenda-review-settings
-;;                  '((org-agenda-span 'week)
-;;                    (org-agenda-start-on-weekday 0)
-;;                    (org-agenda-overriding-header "Week in Review"))
-;;                  )
-;;                ("~/org/review/week.html")
-;;                ))
+;; Common settings for all reviews
+(setq efs/org-agenda-review-settings
+      '((org-agenda-files '("~/org/notes.org"
+                            "~/org/projects.org"
+                            ))
+        (org-agenda-show-all-dates t)
+        (org-agenda-start-with-log-mode t)
+        (org-agenda-start-with-clockreport-mode t)
+        (org-agenda-archives-mode t)
+        ;; I don't care if an entry was archived
+        (org-agenda-hide-tags-regexp
+         (concat org-agenda-hide-tags-regexp
+                 "\\|ARCHIVE"))
+        ))
+;; Show the agenda with the log turn on, the clock table show and
+;; archived entries shown.  These commands are all the same exept for
+;; the time period.
+(add-to-list 'org-agenda-custom-commands
+             `("Rw" "Week in review"
+               agenda ""
+               ;; agenda settings
+               ,(append
+                 efs/org-agenda-review-settings
+                 '((org-agenda-span 'week)
+                   (org-agenda-start-on-weekday 0)
+                   (org-agenda-overriding-header "Week in Review"))
+                 )
+               ("~/org/review/week.html")
+               ))
 
 
-;; (add-to-list 'org-agenda-custom-commands
-;;              `("Rd" "Day in review"
-;;                agenda ""
-;;                ;; agenda settings
-;;                ,(append
-;;                  efs/org-agenda-review-settings
-;;                  '((org-agenda-span 'day)
-;;                    (org-agenda-overriding-header "Week in Review"))
-;;                  )
-;;                ("~/org/review/day.html")
-;;                ))
+(add-to-list 'org-agenda-custom-commands
+             `("Rd" "Day in review"
+               agenda ""
+               ;; agenda settings
+               ,(append
+                 efs/org-agenda-review-settings
+                 '((org-agenda-span 'day)
+                   (org-agenda-overriding-header "Week in Review"))
+                 )
+               ("~/org/review/day.html")
+               ))
 
-;; (add-to-list 'org-agenda-custom-commands
-;;              `("Rm" "Month in review"
-;;                agenda ""
-;;                ;; agenda settings
-;;                ,(append
-;;                  efs/org-agenda-review-settings
-;;                  '((org-agenda-span 'month)
-;;                    (org-agenda-start-day "01")
-;;                    (org-read-date-prefer-future nil)
-;;                    (org-agenda-overriding-header "Month in Review"))
-;;                  )
-;;                ("~/org/review/month.html")
-;;                ))
+(add-to-list 'org-agenda-custom-commands
+             `("Rm" "Month in review"
+               agenda ""
+               ;; agenda settings
+               ,(append
+                 efs/org-agenda-review-settings
+                 '((org-agenda-span 'month)
+                   (org-agenda-start-day "01")
+                   (org-read-date-prefer-future nil)
+                   (org-agenda-overriding-header "Month in Review"))
+                 )
+               ("~/org/review/month.html")
+               ))
 
-;; ;; Helper functions defined for projects which are used by agenda views (again from doc.norang.ca/org-mode.html)
+;; Helper functions defined for projects which are used by agenda views (again from doc.norang.ca/org-mode.html)
 (defun bh/is-project-p ()
   "Any task with a todo keyword subtask"
   (save-restriction
@@ -844,7 +857,10 @@ as the default task."
 
 ;; ;; ;; Org pomodoro
 ;; (require-package 'org-pomodoro)
-;; (setq org-pomodoro-keep-killed-pomodoro-time t)
+(setq org-pomodoro-keep-killed-pomodoro-time t)
+(setq org-pomodoro-length 90)
+(setq org-pomodoro-short-break-length 20)
+(setq org-pomodoro-long-break-length 60)
 ;; (after-load 'org-agenda
 ;;   (define-key org-agenda-mode-map (kbd "P") 'org-pomodoro))
 
@@ -950,17 +966,17 @@ as the default task."
 ;;                                         ; (getcals)
 ;; ;; Log overview for weekly review - set to custom keybinding
 ;; ;; See http://emacs.stackexchange.com/questions/909/how-can-i-have-an-agenda-timeline-view-of-multiple-files
-;; ; (defun org-agenda-timeline-all (&optional arg)
-;; ;   (interactive "P")
-;; ;   (with-temp-buffer
-;; ;     (dolist (org-agenda-file org-agenda-files)
-;; ;       (insert-file-contents org-agenda-file nil)
-;; ;       (end-of-buffer)
-;; ;       (newline))
-;; ;     (write-file "~/Documents/Meta Work/timeline.org")
-;; ;     (org-agenda arg "L")))
+(defun org-agenda-timeline-all (&optional arg)
+  (interactive "P")
+  (with-temp-buffer
+    (dolist (org-agenda-file org-agenda-files)
+      (insert-file-contents org-agenda-file nil)
+      (end-of-buffer)
+      (newline))
+    (write-file "~/Documents/Meta Work/timeline.org")
+    (org-agenda arg "L")))
 
-;; ; (global-set-key "C-c t")
-;; ; (define-key org-mode-map (kbd "C-c t") 'org-agenda-timeline-all)
+(global-set-key "C-c t")
+(define-key org-mode-map (kbd "C-c t") 'org-agenda-timeline-all)
 
 (provide 'init-org)

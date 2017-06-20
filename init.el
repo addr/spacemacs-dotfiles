@@ -31,6 +31,10 @@ values."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
+     ruby
+     php
+     nginx
+     yaml
      javascript
      lua
      python
@@ -308,7 +312,22 @@ you should place your code here."
   ;; load user configs in configs directory
   (push "/Users/andy/.spacemacs.d/configs" load-path)
   (require 'init-org)
+  (require 'init-flycheck)
+  ;; (add-hook 'text-mode-hook 'spacemacs/toggle-truncate-lines-on)
+  (server-start)
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(flycheck-eslint-rules-directories (quote ("~/.eslintrc"))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
